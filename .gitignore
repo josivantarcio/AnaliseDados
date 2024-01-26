@@ -1,1 +1,33 @@
+# Arquivos de configuração
+*.yml
+*.yaml
+
+# Ambiente Virtual
+venv/
+env/
+
+# Arquivos de cache e logs
 __pycache__/
+*.pyc
+*.pyo
+*.log
+
+# Arquivos de dados brutos
+/data/
+/raw_data/
+
+# Arquivos gerados durante a análise
+/analysis_results/
+
+# Notebooks e outputs do Jupyter
+.ipynb_checkpoints/
+*.ipynb
+*.html
+*.pkl
+
+# Arquivos temporários
+*.tmp
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
