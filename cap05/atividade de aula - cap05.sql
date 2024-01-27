@@ -26,3 +26,46 @@ ON p.id_cliente = c.id_cliente
 GROUP BY c.cidade_cliente
 ORDER BY media DESC;
 
+INSERT INTO `cap05`.`TB_CLIENTES` (`id_cliente`, `nome_cliente`, `endereco_cliente`, `cidade_cliente`, `estado_cliente`)
+VALUES (12, "Bill Gates", "Rua 14", "Santos", "SP");
+
+INSERT INTO `cap05`.`TB_CLIENTES` (`id_cliente`, `nome_cliente`, `endereco_cliente`, `cidade_cliente`, `estado_cliente`)
+VALUES (13, "Jeff Bezos", "Rua 29", "Osasco", "SP");
+
+# Insere mais 3 pedidos
+INSERT INTO `cap05`.`TB_PEDIDOS` (`id_pedido`, `id_cliente`, `id_vendedor`, `data_pedido`, `id_entrega`, `valor_pedido`)
+VALUES (1016, 11, 5, now(), 27, 234.09);
+
+INSERT INTO `cap05`.`TB_PEDIDOS` (`id_pedido`, `id_cliente`, `id_vendedor`, `data_pedido`, `id_entrega`, `valor_pedido`)
+VALUES (1017, 12, 4, now(), 22, 678.30);
+
+INSERT INTO `cap05`.`TB_PEDIDOS` (`id_pedido`, `id_cliente`, `id_vendedor`, `data_pedido`, `id_entrega`, `valor_pedido`)
+VALUES (1018, 13, 4, now(), 22, 978.30);
+
+
+SELECT SUM(p.valor_pedido) as soma,
+	c.cidade_cliente as cidade,
+    c.estado_cliente as estado
+FROM cap05.TB_PEDIDOS p 
+INNER JOIN cap05.TB_CLIENTES c 
+ON p.id_cliente = c.id_cliente
+GROUP BY c.cidade_cliente, c.estado_cliente;
+
+INSERT INTO `cap05`.`TB_CLIENTES` (`id_cliente`, `nome_cliente`, `endereco_cliente`, `cidade_cliente`, `estado_cliente`)
+VALUES (14, "Melinda Gates", "Rua 14", "Barueri", "SP");
+
+INSERT INTO `cap05`.`TB_CLIENTES` (`id_cliente`, `nome_cliente`, `endereco_cliente`, `cidade_cliente`, `estado_cliente`)
+VALUES (15, "Barack Obama", "Rua 29", "Barueri", "SP");
+
+
+SELECT 
+	CASE
+		WHEN FLOOR( SUM( p.valor_pedido)) IS NULL THEN 0 ELSE  FLOOR( SUM( p.valor_pedido))
+	END as soma,
+	c.nome_cliente as nome,
+    c.cidade_cliente as cidade,
+	c.estado_cliente as estado
+FROM cap05.TB_PEDIDOS as p 
+RIGHT JOIN cap05.TB_CLIENTES as c 
+ON p.id_cliente = c.id_cliente
+GROUP BY c.estado_cliente, c.nome_cliente, c.cidade_cliente;
