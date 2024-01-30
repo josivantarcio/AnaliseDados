@@ -29,12 +29,32 @@ WHERE payment_status = 'PAID';
 
 
 # 5- Qual tipo de driver (driver_type) fez o maior número de entregas?
-SELECT * FROM gf.drivers;
+SELECT COUNT(driver_id) QUANT, driver_type TIPO FROM gf.drivers
+GROUP BY driver_type
+ORDER BY quant DESC 
+LIMIT 1;
 
 
 # 6- Qual a distância média das entregas por tipo de driver (driver_modal)?
+SELECT ROUND( AVG(de.delivery_distance_meters),2) as Media, d.driver_modal as Modelo 
+FROM gf.drivers as d JOIN gf.deliveries as de
+ON d.driver_id = de.driver_id
+GROUP BY d.driver_modal;
+
+
 # 7- Qual a média de valor de pedido (order_amount) por loja, em ordem decrescente?
+SELECT ROUND(AVG(o.order_amount),2) as Media, s.store_name as Loja
+FROM gf.orders as o JOIN gf.stores as s
+ON o.store_id = s.store_id
+GROUP BY s.store_name
+ORDER BY Media DESC;
+
+
 # 8- Existem pedidos que não estão associados a lojas? Se caso positivo, quantos?
+SELECT COUNT(DISTINCT(o.order_id)) as Pedidos FROM gf.orders as o LEFT JOIN gf.stores as s
+ON o.store_id = s.store_id
+WHERE s.store_id IS NULL;
+
 # 9- Qual o valor total de pedido (order_amount) no channel 'FOOD PLACE'?
 # 10- Quantos pagamentos foram cancelados (chargeback)?
 # 11- Qual foi o valor médio dos pagamentos cancelados (chargeback)?
