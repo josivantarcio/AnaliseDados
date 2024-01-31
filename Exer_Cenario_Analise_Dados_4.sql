@@ -160,9 +160,44 @@ ORDER BY Media DESC;
 
 # 15- Qual estado do hub (hub_state), segmento da loja (store_segment) 
 # e tipo de canal (channel_type) teve média de valor de pedido (order_amount) maior que 450?
+SELECT 
+    h.hub_state AS Estado,
+    s.store_segment AS Segmento,
+    c.channel_type AS Tipo,
+    o.order_amount AS Media
+FROM
+    gf.orders AS o
+        JOIN
+    gf.channels AS c ON o.channel_id = c.channel_id
+        JOIN
+    gf.stores AS s ON o.store_id = s.store_id
+        JOIN
+    gf.hubs AS h ON s.hub_id = h.hub_id
+GROUP BY Tipo , Segmento , Estado , Media
+HAVING ROUND(AVG(Media > 450), 2)
+ORDER BY Estado DESC;
+
+
 # 16- Qual o valor total de pedido (order_amount) por estado do hub (hub_state), 
 # segmento da loja (store_segment) e tipo de canal (channel_type)? Demonstre os totais
 # intermediários e formate o resultado.
+SELECT 
+    SUM(o.order_amount) total,
+    h.hub_state estado,
+    s.store_segment segmento,
+    c.channel_type tipo
+FROM
+    gf.orders o,
+    gf.hubs h,
+    gf.stores s,
+    gf.channels c
+WHERE
+    o.store_id = s.store_id
+        AND s.hub_id = h.hub_id
+        AND c.channel_id = o.channel_id
+GROUP BY estado , segmento , tipo;
+
+
 # 17- Quando o pedido era do Hub do Rio de Janeiro (hub_state), segmento de loja
 # 'FOOD', tipo de canal Marketplace e foi cancelado, qual foi a média de valor do pedido (order_amount)?
 # 18- Quando o pedido era do segmento de loja 'GOOD', tipo de canal Marketplace e foi
