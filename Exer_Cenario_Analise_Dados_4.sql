@@ -169,12 +169,12 @@ FROM
     gf.orders AS o
         JOIN
     gf.channels AS c ON o.channel_id = c.channel_id
-        JOIN
+        LEFT JOIN
     gf.stores AS s ON o.store_id = s.store_id
-        JOIN
+        LEFT JOIN
     gf.hubs AS h ON s.hub_id = h.hub_id
 GROUP BY Tipo , Segmento , Estado , Media
-HAVING ROUND(AVG(Media > 450), 2)
+HAVING FORMAT(AVG(Media > 450), 2)
 ORDER BY Estado DESC;
 
 
@@ -182,7 +182,7 @@ ORDER BY Estado DESC;
 # segmento da loja (store_segment) e tipo de canal (channel_type)? Demonstre os totais
 # intermediários e formate o resultado.
 SELECT 
-    SUM(o.order_amount) total,
+    FORMAT(SUM(o.order_amount), 2) total,
     h.hub_state estado,
     s.store_segment segmento,
     c.channel_type tipo
@@ -195,14 +195,80 @@ WHERE
     o.store_id = s.store_id
         AND s.hub_id = h.hub_id
         AND c.channel_id = o.channel_id
-GROUP BY estado , segmento , tipo;
+GROUP BY estado , segmento , tipo
+ORDER BY estado DESC;
 
 
 # 17- Quando o pedido era do Hub do Rio de Janeiro (hub_state), segmento de loja
 # 'FOOD', tipo de canal Marketplace e foi cancelado, qual foi a média de valor do pedido (order_amount)?
+SELECT 
+    FORMAT(AVG(o.order_amount), 2) AS Media,
+    h.hub_city AS cidade,
+    s.store_segment AS segmento,
+    c.channel_type AS tipo,
+    o.order_status AS status
+FROM
+    gf.hubs h
+        JOIN
+    gf.orders o
+        JOIN
+    gf.stores s
+        JOIN
+    gf.channels c ON s.hub_id = h.hub_id
+        AND o.store_id = s.store_id
+        AND c.channel_id = o.channel_id
+GROUP BY cidade , segmento , tipo , status
+HAVING segmento = 'food'
+    AND cidade = 'rio de janeiro'
+    AND tipo = 'Marketplace'
+    AND status LIKE 'cancel%';
+
+
 # 18- Quando o pedido era do segmento de loja 'GOOD', tipo de canal Marketplace e foi
 # cancelado, algum hub_state teve total de valor do pedido superior a 100.000?
+SELECT 
+    FORMAT(SUM(o.order_amount), 2) AS total,
+    h.hub_state AS estado,
+    s.store_segment AS segmento,
+    c.channel_type AS tipo,
+    o.order_status AS status_pedido
+FROM
+    gf.orders AS o
+        JOIN
+    gf.stores AS s
+        JOIN
+    gf.channels AS c
+        JOIN
+    gf.hubs AS h ON o.store_id = s.store_id
+        AND c.channel_id = o.channel_id
+        AND s.hub_id = h.hub_id
+GROUP BY estado , segmento , tipo , status_pedido
+HAVING segmento = 'good'
+    AND tipo = 'Marketplace'
+    AND status_pedido = 'canceled'
+    AND total > 100.000;
+
+
 # 19- Em que data houve a maior média de valor do pedido (order_amount)? Dica:
 # Pesquise e use a função SUBSTRING().
+SELECT 
+    SUBSTRING(order_moment_created, 1, 10) AS data_venda,
+    FORMAT(AVG(order_amount), 2) AS media
+FROM
+    gf.orders
+GROUP BY data_venda
+ORDER BY media DESC
+LIMIT 1;
+
+
 # 20- Em quais datas o valor do pedido foi igual a zero (ou seja, não houve venda)? Dica:
 # Use a função SUBSTRING().
+SELECT 
+    SUBSTRING(order_moment_created, 1, 10) AS data_venda,
+    FORMAT(order_amount, 2) AS valor,
+    order_status as situacao
+FROM
+    gf.orders
+WHERE
+    order_status = 'canceled'
+ORDER BY valor DESC;
