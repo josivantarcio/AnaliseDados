@@ -1,5 +1,4 @@
 # 1- Qual o número de hubs por cidade?
-SELECT * FROM gf.hubs order by hub_city;
 SELECT 
     hub_city, COUNT(hub_id)
 FROM
@@ -8,16 +7,14 @@ GROUP BY (hub_city);
 
 
 # 2- Qual o número de pedidos (orders) por status?
-SELECT * FROM gf.orders;
 SELECT 
-    COUNT(DISTINCT store_id) AS Pedidos, order_status AS Status
+    order_status AS Status, COUNT(DISTINCT store_id) AS Pedidos
 FROM
     gf.orders
-GROUP BY status;
+GROUP BY Status;
 
 
 # 3- Qual o número de lojas (stores) por cidade dos hubs?
-SELECT * FROM gf.stores s, gf.hubs h WHERE s.hub_id = h.hub_id;
 SELECT 
     COUNT(DISTINCT s.store_name) AS Quant, h.hub_city AS Cidade
 FROM
@@ -30,7 +27,6 @@ ORDER BY Cidade;
 
 
 # 4- Qual o maior e o menor valor de pagamento (payment_amount) registrado?
-SELECT * FROM gf.payments order by payment_amount;
 SELECT 
     MAX(payment_amount) AS Maior, MIN(payment_amount) AS Menor
 FROM
@@ -41,11 +37,14 @@ WHERE
 
 # 5- Qual tipo de driver (driver_type) fez o maior número de entregas?
 SELECT 
-    COUNT(driver_id) QUANT, driver_type TIPO
+    driver_type tipo, COUNT(delivery_id) num_entrega
 FROM
-    gf.drivers
+    gf.drivers d,
+    gf.deliveries de
+WHERE
+    de.driver_id = d.driver_id
 GROUP BY driver_type
-ORDER BY quant DESC
+ORDER BY num_entrega DESC
 LIMIT 1;
 
 
@@ -73,13 +72,14 @@ ORDER BY Media DESC;
 
 # 8- Existem pedidos que não estão associados a lojas? Se caso positivo, quantos?
 SELECT 
+    COALESCE(s.store_name, 'sem nome') AS Nomes,
     COUNT(DISTINCT (o.order_id)) AS Pedidos
 FROM
     gf.orders AS o
         LEFT JOIN
     gf.stores AS s ON o.store_id = s.store_id
-WHERE
-    s.store_id IS NULL;
+GROUP BY Nomes
+ORDER BY Pedidos DESC;
 
 # 9- Qual o valor total de pedido (order_amount) no channel 'FOOD PLACE'?
 SELECT 
@@ -103,7 +103,7 @@ WHERE
 
 # 11- Qual foi o valor médio dos pagamentos cancelados (chargeback)?
 SELECT 
-    ROUND(AVG(DISTINCT (p.payment_amount)), 2) AS Media,
+    ROUND(AVG(p.payment_amount), 2) AS Media,
     p.payment_status AS Status
 FROM
     gf.payments AS p
@@ -115,10 +115,10 @@ GROUP BY p.payment_status;
 # 12- Qual a média do valor de pagamento por método de pagamento
 SELECT 
     ROUND(AVG(payment_amount), 2) AS Media,
-    payment_status AS Metodo
+    payment_method AS Metodo
 FROM
     gf.payments
-GROUP BY payment_status
+GROUP BY payment_method
 ORDER BY media DESC;
  
 # (payment_method) em ordem decrescente?
