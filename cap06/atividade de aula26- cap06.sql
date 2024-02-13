@@ -10,7 +10,7 @@ FROM
 WHERE data_inicio < '2012-08-01' AND numero_estacao_inicio = 31000;
 
 ## calcula o tempo de aluguel de cada registro usando o LAG ou LEAD
-SELECT 
+SELECT * FROM (SELECT 
     estacao_fim AS estacao,
     CAST(data_inicio AS DATE) AS dataInicio,
     duracao_segundos AS duracao,
@@ -22,4 +22,5 @@ SELECT
         ELSE LEAD(duracao_segundos, 1) OVER (PARTITION BY estacao_inicio ORDER BY CAST(data_inicio AS DATE)) - duracao_segundos 
     END AS diferencaTempo
 FROM
-    cap06.TB_BIKES WHERE numero_estacao_inicio = 31000 AND data_inicio < '2012-08-01';
+    cap06.TB_BIKES WHERE numero_estacao_inicio = 31000 AND data_inicio < '2012-08-01') as resultado
+WHERE resultado.diferencaTempo IS NOT NULL ORDER BY estacao;
