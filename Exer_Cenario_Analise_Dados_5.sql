@@ -16,15 +16,15 @@ SELECT
     estacao_final EstacaoFinal
 FROM
     cap06.TB_BIKES_Q2
-GROUP BY Tipo , EstacaoFinal order by Tipo;
+GROUP BY EstacaoFinal, Tipo;
 
 # 3- Qual a média de tempo (em segundos) de duração do aluguel de bike por tipo de membro e
 # por estação fim (onde as bikes são entregues após o aluguel) ao longo do tempo?
 SELECT 
 	tipo_membro Tipo,
     estacao_final EstacaoFinal,
-    AVG(duracao) OVER(PARTITION By tipo_membro and estacao_final ORDER BY CAST(data_final as DATE)) as Media,
-    CAST(data_final as DATE) DataFinal
+    AVG(duracao) OVER(PARTITION By tipo_membro ORDER BY data_inicial) as Media,
+    DATE(data_inicial) DataInicial
 FROM
     cap06.TB_BIKES_Q2;
 
@@ -32,21 +32,25 @@ FROM
 # 4- Qual hora do dia (independente do mês) a bike de número W01182 teve o maior número de
 # aluguéis considerando a data de início?
 SELECT 
-	date_format(data_inicial, '%H') Hora,
-    MAX(duracao) OVER (ORDER BY HOUR(data_inicial) desc) as Duracao
+    EXTRACT( HOUR FROM data_inicial) AS Hora, 
+    COUNT(duracao) AS Duracao
 FROM
-    cap06.TB_BIKES_Q2 where numero_bike = 'W01182' order by data_inicial desc limit 1;
+    cap06.TB_BIKES_Q2
+WHERE
+    numero_bike = 'W01182'
+GROUP BY Hora
+ORDER BY Duracao DESC;
 
 
 # 5- Qual o número de aluguéis da bike de número W01182 ao longo do tempo considerando a
 # data de início?
 SELECT 
-    data_inicial as inicial,
-    row_number() over (order by data_inicial) quant
+    date(data_inicial) as inicial,
+    row_number() over (partition by estacao_inicial order by data_inicial) quant
 FROM
     cap06.TB_BIKES_Q2
 WHERE
-    numero_bike = 'W01182';
+    numero_bike = 'W01182' ORDER BY inicial;
 
 
 # 6- Retornar:
@@ -70,23 +74,26 @@ WHERE MONTH(data_final) = 4;
 # Retornar os dados para os aluguéis entre 7 e 11 da manhã
 SELECT 
     estacao_final as estacaoFinal
-    ,date_format(data_final, '%d/%M/%y %H/%i/%s') as dataFinal
+    ,date_format(data_final, '%d/%M/%Y %H/%i/%s') as dataFinal
     ,duracao as Duracao
-    ,row_number() over(partition by day(data_inicial) order by data_inicial) as Ranking
+    ,dense_rank() over(partition by estacao_final order by date(data_final)) as Ranking
 FROM
     cap06.TB_BIKES_Q2
-WHERE HOUR(data_inicial) >= 7 and HOUR(data_inicial) <= 11 order by data_inicial;
+WHERE HOUR(data_final) between 7 and 11;
 
 # 8- Qual a diferença da duração do aluguel de bikes ao longo do tempo, de um registro para
 # outro, considerando data de início do aluguel e estação de início?
 # A data de início deve ser retornada no formato: Sat/Jan/12 00:00:00 (Sat = Dia da semana
 # abreviado e Jan igual mês abreviado). Retornar os dados para os aluguéis entre 01 e 03 da manhã
 SELECT 
-	duracao - lead(duracao, 1)OVER(partition by estacao_inicial order by data_inicial) as Diferenca,
+	CASE WHEN 
+		duracao - lead(duracao, 1) OVER(partition by estacao_inicial order by data_inicial) IS NULL THEN 0
+    ELSE duracao - lead(duracao, 1) OVER(partition by estacao_inicial order by data_inicial)
+    END as Diferenca,
     date_format(data_inicial, '%a/%b/%d %H:%i:%s' ) as DataInicial
 FROM
     cap06.TB_BIKES_Q2
-WHERE DAY(data_inicial) >= 1 AND DAY(data_inicial) <= 3;
+WHERE DAY(data_inicial) between 1 AND 3;
 
 # 9- Retornar:
 # Estação fim, data fim e duração em segundos do aluguel
@@ -96,22 +103,23 @@ WHERE DAY(data_inicial) >= 1 AND DAY(data_inicial) <= 3;
 # Qual critério usado pela função NTILE para dividir os grupos?
 SELECT 
     estacao_final AS estacaoFinal,
-    DATE_FORMAT(data_final, '%d/%M/%y %H:%i:%s') AS dataFinal,
+    DATE_FORMAT(data_final, '%d/%M/%Y %H:%i:%s') AS dataFinal,
     duracao AS Duracao,
-    NTILE(4) OVER(order by data_final) AS Grupo
+    NTILE(4) OVER(partition by estacao_final order by date(data_final)) AS Grupo
 FROM
     cap06.TB_BIKES_Q2 
-WHERE HOUR(data_inicial) >= 8 AND HOUR(data_inicial) <= 10;
+WHERE HOUR(data_final) between 8 AND 10;
 
 
 # 10- Quais estações tiveram mais de 35 horas de duração total do aluguel de bike ao longo do
 # tempo considerando a data fim e estação fim?
 # Retorne os dados entre os dias '2012-04-01' e '2012-04-02'
 # Dica: Use função window e subquery
-select * from (
+select * from(
 	select 
-		estacao_inicial as estacao,
-		sum(duracao) over(partition by estacao_final order by data_final) as total 
+		estacao_final as estacao,
+        date(data_final) as dataFinal,
+		sum(duracao /60 /60) over(partition by estacao_final order by date(data_final)) as total 
 	from cap06.TB_BIKES_Q2 
-	where date(data_inicial) = '2012-04-01' and  date(data_final) = '2012-04-02') 
-where total >= 35;
+	where date(data_final) between '2012-04-01' and '2012-04-02') as resultado
+where resultado.total > 35 order by resultado.estacao ;
